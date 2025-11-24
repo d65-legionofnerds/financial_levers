@@ -1,6 +1,6 @@
+library(plotly)
 library(billboarder)
 library(shinydashboard)
-library(gghighlight)
 library(shiny)
 library(bslib)
 library(readr)
@@ -99,7 +99,7 @@ ui <- page_sidebar(
           full_screen = TRUE,
           card_header("Expenditures vs Revenue"),
           style = "height: 400px; margin-bottom: 15px;",
-          plotOutput("rev_exp_adjusted", height = "180px")
+          plotlyOutput("rev_exp_adjusted", height = "180px")
         )
       )
     ),

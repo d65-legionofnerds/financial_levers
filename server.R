@@ -1,7 +1,11 @@
 library(billboarder)
-library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(readr)
 library(shiny)
 library(scales)
+library(tidyverse)
+library(plotly)
 
 
 finance_levers_yr <- read_csv("data/finance_levers_yr.csv")
@@ -133,7 +137,7 @@ server <- function(input, output, session) {
     geom_line(
       data = df_smooth,
       aes(x = year_num, y = smooth_y, color = `Lever type`),
-      linewidth = 1.4
+      size = 1.4
     ) +
       
       # ---- BASELINE DASHED LINE ----
@@ -163,7 +167,7 @@ server <- function(input, output, session) {
       )
   })
   
-  output$rev_exp_adjusted <- renderPlot({
+  output$rev_exp_adjusted <- renderPlotly({
     df <- expenses_filtered() %>% 
       # Aggregate to single value per year per lever type
       group_by(`Lever type`, year) %>%
@@ -180,7 +184,7 @@ server <- function(input, output, session) {
       )
     
     # Plot with ribbon between the two lines
-    ggplot(df_wide, aes(x = year_num)) +
+    p <- ggplot(df_wide, aes(x = year_num)) +
       geom_ribbon(aes(ymin = pmin(revenue, expenditure), 
                       ymax = pmax(revenue, expenditure),
                       fill = fill_color), 
@@ -196,6 +200,10 @@ server <- function(input, output, session) {
         labels = scales::label_dollar(scale = 1e-6, suffix = "M")) +
       theme_minimal(base_size = 16) +
       labs(title = "Adjusted Revenue & Expenditure", x = "Fiscal Year", y = "Amount")
+    
+    ggplotly(p)
   })
   
 }
+
+

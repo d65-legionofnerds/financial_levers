@@ -1,6 +1,5 @@
-library(billboarder)
 library(tidyverse)
-library(shiny)
+
 
 # Load data
 finance_data_levers <- read_csv(
