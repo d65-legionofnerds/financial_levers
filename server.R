@@ -1,0 +1,224 @@
+library(billboarder)
+library(tidyverse)
+library(shiny)
+library(scales)
+
+
+finance_levers_yr <- read_csv("data/finance_levers_yr.csv")
+
+
+
+gp1 <- ggplot(penguins) +
+  theme_minimal(base_size = 16) +
+  scale_fill_discrete(h = c(0, 190)) +
+  theme(axis.title = element_blank(),
+        legend.position = "bottom")
+
+server <- function(input, output, session) {
+  
+  # ---- GAUGE CHART ----
+  # Reactive filtered data
+  filtered_data <- reactive({
+    req(input$finance_plan)
+    
+    if (input$finance_plan == "NERDS") {
+      finance_data_levers %>%
+        filter(Source %in% c("NERDS", "Nov3"))
+    } else {
+      finance_data_levers %>%
+        filter(Source == input$finance_plan)
+    }
+  })
+  
+  output$gg_plot <- renderBillboarder({
+    
+    # Sum FY27 + FY28 in millions
+    data_sum <- filtered_data() %>%
+      select(FY27, FY28) %>%
+      rowSums(na.rm = TRUE) %>%
+      sum() / 1e6
+    
+    billboarder() %>%
+      bb_gaugechart(
+        value = data_sum,
+        min = 0,
+        max = 11,
+        color = "#5839BF"
+      ) %>% 
+      bb_gauge(
+        label = list(
+          format = htmlwidgets::JS(
+            "function(value) { return value.toFixed(1) + ' M'; }"
+          )
+        )
+      )
+  })
+  
+
+  
+  # Output table showing filtered data including FY27
+  output$finance_table <- renderTable({
+    filtered_data()
+  })
+  
+  
+  
+  
+  # ---- SCATTER PLOT WITH HIGHLIGHT ----
+  gg_plot_h <- reactive({
+    gp1 +
+      geom_point(
+        aes(
+          x = flipper_length_mm,
+          y = body_mass_g,
+          color = !!sym(input$finance_plan)
+        )
+      ) +
+      gghighlight() +
+      facet_wrap(vars(!!sym(input$finance_plan)))
+  })
+  
+  
+  
+  # ---- BILL DEPTH ----
+  output$bill_depth <- renderPlot({
+    gp1 +
+      geom_bar(
+        aes(
+          x = bill_depth_mm, 
+          fill = !!sym(input$finance_plan)
+        ),
+        alpha = 0.5
+      )
+  })
+  
+  
+  # ---- expenditures ----
+  expenses_all <- read_csv("data/expenses_yr.csv")
+  
+  # Apply CPI and Expenses Growth adjustments to revenue and expenditure
+  expenses_filtered <- reactive({
+    req(input$finance_plan, input$CPI, input$ExpensesGrowth)
+    
+    expenses_all %>%
+      filter(
+        Source == input$finance_plan,
+        CPI == input$CPI,
+        ExpensesGrowth == input$ExpensesGrowth
+      )
+  })
+
+  finance_filtered <- reactive({
+    req(input$finance_plan)
+    
+    if (input$finance_plan == "NERDS") {
+      finance_levers_yr %>%
+        filter(Source %in% c("NERDS", "Nov3"))
+    } else {
+      finance_levers_yr %>%
+        filter(Source == input$finance_plan)
+    }
+  })
+  
+  output$rev_exp <- renderPlot({
+    df <- finance_filtered()
+    
+    # convert FY27 → 27, FY28 → 28 for numeric x-axis
+    df <- df %>%
+      mutate(year_num = as.numeric(gsub("FY", "", year)))
+    
+    # Step 1: Build smoothed values for each lever type
+    smoothed <- df %>%
+      group_by(`Lever type`) %>%
+      arrange(year_num) %>%
+      do({
+        smooth_obj <- loess(total ~ year_num, data = ., span = 0.75)
+        data.frame(
+          year_num = .$year_num,
+          smooth_y = predict(smooth_obj)
+        )
+      })
+    
+    # Step 2: Merge smoothed values back into df
+    df_smooth <- df %>%
+      left_join(smoothed, by = c("Lever type", "year_num"))
+    
+    ggplot() +
+      
+      # ---- SHADED AREA UNDER EACH CURVE ----
+    geom_ribbon(
+      data = df_smooth,
+      aes(x = year_num, ymin = 0, ymax = smooth_y, fill = `Lever type`),
+      alpha = 0.25
+    ) +
+      
+      # ---- SMOOTHED LINE ----
+    geom_line(
+      data = df_smooth,
+      aes(x = year_num, y = smooth_y, color = `Lever type`),
+      linewidth = 1.4
+    ) +
+      
+      # ---- BASELINE DASHED LINE ----
+    geom_line(
+      data = df_smooth %>% filter(Source == "baseline"),
+      aes(x = year_num, y = smooth_y),
+      linetype = "dashed",
+      color = "black",
+      linewidth = 1
+    ) +
+      
+      # ---- MANUAL COLORS ----
+    scale_color_manual(
+      values = c("revenue" = "#5839BF", "expenditure" = "red")
+    ) +
+      scale_fill_manual(
+        values = c("revenue" = "#5839BF", "expenditure" = "red")
+      ) +
+      
+      # ---- THEMES AND LABELS ----
+    scale_y_continuous(labels = label_dollar(scale = 1e-6, suffix = "M")) +
+      theme_minimal(base_size = 16) +
+      labs(
+        title = "Revenue & Expenditure by Fiscal Year",
+        x = "Fiscal Year",
+        y = "Amount"
+      )
+  })
+  
+  output$rev_exp_adjusted <- renderPlot({
+    df <- expenses_filtered() %>% 
+      # Aggregate to single value per year per lever type
+      group_by(`Lever type`, year) %>%
+      summarise(value = mean(value, na.rm = TRUE), .groups = "drop") %>%
+      mutate(year_num = as.numeric(gsub("FY", "", year))) %>%
+      arrange(`Lever type`, year_num)
+    
+    # Pivot wider to get revenue and expenditure as separate columns
+    df_wide <- df %>%
+      pivot_wider(names_from = `Lever type`, values_from = value) %>%
+      mutate(
+        # Determine which is higher
+        fill_color = ifelse(revenue > expenditure, "surplus", "deficit")
+      )
+    
+    # Plot with ribbon between the two lines
+    ggplot(df_wide, aes(x = year_num)) +
+      geom_ribbon(aes(ymin = pmin(revenue, expenditure), 
+                      ymax = pmax(revenue, expenditure),
+                      fill = fill_color), 
+                  alpha = 0.3) +
+      geom_line(aes(y = revenue, color = "revenue"), size = 1.2) +
+      geom_line(aes(y = expenditure, color = "expenditure"), size = 1.2) +
+      scale_fill_manual(name = "Status",
+                        values = c("surplus" = "#5839BF", "deficit" = "red")) +
+      scale_color_manual(name = "Lever type",
+                         values = c("revenue" = "#5839BF", "expenditure" = "red")) +
+      scale_y_continuous(#limits = c(170000000, 195000000),
+                         n.breaks = 6, 
+                         labels = scales::label_dollar(scale = 1e-6, suffix = "M")) +
+      theme_minimal(base_size = 16) +
+      labs(title = "Adjusted Revenue & Expenditure", x = "Fiscal Year", y = "Amount")
+  })
+  
+}
