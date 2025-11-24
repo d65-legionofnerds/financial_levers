@@ -26,7 +26,7 @@ admin_slider <- sliderInput(
   min = 0,
   max = 50,
   value = 30,
-  step = 5,
+  step = 10,
   post = "%"
 )
 
@@ -53,7 +53,7 @@ exp_slider <- sliderInput(
 sidebar_inputs <- tagList(
   #h5("Finance Plan"),
   finance_plan,
-  
+
   admin_slider,
   
   cpi_slider,

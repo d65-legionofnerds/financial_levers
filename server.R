@@ -80,7 +80,8 @@ server <- function(input, output, session) {
       filter(
         Source == input$finance_plan,
         CPI == input$CPI,
-        ExpensesGrowth == input$ExpensesGrowth
+        ExpensesGrowth == input$ExpensesGrowth,
+        dplyr::near(AdminBloat, input$admin_bloat / 100)
       )
   })
   
