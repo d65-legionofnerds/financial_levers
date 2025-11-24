@@ -5,14 +5,11 @@ library(scales)
 
 
 finance_levers_yr <- read_csv("data/finance_levers_yr.csv")
-
-
-
-gp1 <- ggplot(penguins) +
-  theme_minimal(base_size = 16) +
-  scale_fill_discrete(h = c(0, 190)) +
-  theme(axis.title = element_blank(),
-        legend.position = "bottom")
+finance_data_levers <- read_csv("data/finance data - levers.csv", 
+                                col_types = cols(FY27 = col_number(), 
+                                                 FY28 = col_number(), 
+                                                 FY29 = col_number(),
+                                                 FY30 = col_number()))
 
 server <- function(input, output, session) {
   
@@ -32,11 +29,16 @@ server <- function(input, output, session) {
   
   output$gg_plot <- renderBillboarder({
     
-    # Sum FY27 + FY28 in millions
-    data_sum <- filtered_data() %>%
-      select(FY27, FY28) %>%
-      rowSums(na.rm = TRUE) %>%
-      sum() / 1e6
+    df <- filtered_data()
+    
+    # Calculate sum
+    fy27_sum <- sum(df$FY27, na.rm = TRUE)
+    fy28_sum <- sum(df$FY28, na.rm = TRUE)
+    data_sum <- (fy27_sum + fy28_sum) / 1e6
+    
+    # Ensure numeric and valid
+    data_sum <- round(as.numeric(data_sum), 2)
+    if (is.na(data_sum)) data_sum <- 0
     
     billboarder() %>%
       bb_gaugechart(
@@ -44,53 +46,27 @@ server <- function(input, output, session) {
         min = 0,
         max = 11,
         color = "#5839BF"
-      ) %>% 
+      ) %>%
       bb_gauge(
         label = list(
           format = htmlwidgets::JS(
-            "function(value) { return value.toFixed(1) + ' M'; }"
+            "function(value, ratio) { return value.toFixed(1) + ' M'; }"
           )
         )
       )
   })
   
-
   
   # Output table showing filtered data including FY27
-  output$finance_table <- renderTable({
-    filtered_data()
+  output$finance_table <- DT::renderDataTable({
+    DT::datatable(
+      filtered_data(),
+      rownames = FALSE,
+      filter = "top"
+    )
   })
   
   
-  
-  
-  # ---- SCATTER PLOT WITH HIGHLIGHT ----
-  gg_plot_h <- reactive({
-    gp1 +
-      geom_point(
-        aes(
-          x = flipper_length_mm,
-          y = body_mass_g,
-          color = !!sym(input$finance_plan)
-        )
-      ) +
-      gghighlight() +
-      facet_wrap(vars(!!sym(input$finance_plan)))
-  })
-  
-  
-  
-  # ---- BILL DEPTH ----
-  output$bill_depth <- renderPlot({
-    gp1 +
-      geom_bar(
-        aes(
-          x = bill_depth_mm, 
-          fill = !!sym(input$finance_plan)
-        ),
-        alpha = 0.5
-      )
-  })
   
   
   # ---- expenditures ----
@@ -107,7 +83,7 @@ server <- function(input, output, session) {
         ExpensesGrowth == input$ExpensesGrowth
       )
   })
-
+  
   finance_filtered <- reactive({
     req(input$finance_plan)
     
@@ -215,8 +191,8 @@ server <- function(input, output, session) {
       scale_color_manual(name = "Lever type",
                          values = c("revenue" = "#5839BF", "expenditure" = "red")) +
       scale_y_continuous(#limits = c(170000000, 195000000),
-                         n.breaks = 6, 
-                         labels = scales::label_dollar(scale = 1e-6, suffix = "M")) +
+        n.breaks = 6, 
+        labels = scales::label_dollar(scale = 1e-6, suffix = "M")) +
       theme_minimal(base_size = 16) +
       labs(title = "Adjusted Revenue & Expenditure", x = "Fiscal Year", y = "Amount")
   })

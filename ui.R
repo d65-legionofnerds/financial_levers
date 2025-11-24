@@ -20,14 +20,18 @@ finance_plan <- selectInput(
   selected = "NERDS"
 )
 
-other_input <- selectInput(
+admin_slider <- sliderInput(
   inputId = "admin_bloat",
   label = "Admin Bloat Reduction",
-  choices = c("No Change", "Adjust to median", "Adjust below median"),
-  selected = "Adjust to median"
+  min = 0,
+  max = 50,
+  value = 30,
+  step = 5,
+  post = "%"
 )
 
-slider1 <- sliderInput(
+
+cpi_slider <- sliderInput(
   inputId = "CPI",
   label = "CPI",
   min = 2,
@@ -36,7 +40,7 @@ slider1 <- sliderInput(
   step = 0.1
 )
 
-slider2 <- sliderInput(
+exp_slider <- sliderInput(
   inputId = "ExpensesGrowth",
   label = "Expenses Growth",
   min = 2,
@@ -47,15 +51,13 @@ slider2 <- sliderInput(
 
 # Group sidebar inputs with headings
 sidebar_inputs <- tagList(
-  h4("Finance Plan"),
+  #h5("Finance Plan"),
   finance_plan,
   
-  h4("Admin Settings"),
-  other_input,
+  admin_slider,
   
-  h4("Economic Assumptions"),
-  slider1,
-  slider2
+  cpi_slider,
+  exp_slider
 )
 
 # ---- UI ----
@@ -114,6 +116,21 @@ ui <- page_sidebar(
           p("This Shiny app shows financial levers, revenue and expenditure projections, and other interactive analyses."),
           p("Use the sidebar to select the finance plan, adjust CPI and Expenses Growth sliders, and explore the results.")
         )
+      )
+    ),
+    
+    ## Raw data
+    nav_panel(
+      title = "Source Data",
+      div(
+        style = "max-width: 80%; margin: 0 auto;",
+        card(
+          full_screen = FALSE,
+          card_header("Data from the analysis"),
+          style = "margin-bottom: 15px;",
+          p("This table shows the data used in the calculations. you can filter by typing in the models you want. "),
+          dataTableOutput("finance_table")
+          )
       )
     )
   )
