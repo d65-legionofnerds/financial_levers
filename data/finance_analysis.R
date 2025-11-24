@@ -62,7 +62,7 @@ fy27_budget <- tibble(
 # -------------------------
 # Admin, CPI, Growth inputs
 # -------------------------
-cpi_seq <- seq(2, 3, by = 0.1)
+cpi_seq <- seq(2, 5, by = 0.1)
 exp_seq <- seq(2, 5.25, by = 0.25)
 admin_seq <- seq(0, 0.50, by = 0.1)
 
@@ -216,7 +216,40 @@ all_projections %>%
   ) %>% print(n = 50)
 
 # Example check (replace "Nov3" with a real source name present in your data)
-# all_projections %>% filter(Source == "Nov3" & CPI == 2 & ExpensesGrowth == 3 & AdminBloat == 0.1)
+all_projections %>% filter(Source == "Nov3" & CPI == 2 & ExpensesGrowth == 3 & AdminBloat == 0.1)
 
 # Save final table
 write_csv(all_projections, "data/expenses_yr.csv")
+
+
+## Calc cash on hand: 
+# For each unique combo of Admin, CPI, Exp growth, do the following
+# take expenses/365
+# take revenue-expenses, plus prior year fund values
+# take this value above and divide by expenses/365 to get cash on hand
+## Calc cash on hand: 
+# For each unique combo of Admin, CPI, Exp growth, do the following
+# take expenses/365
+# take revenue-expenses, plus prior year fund values
+# take this value above and divide by expenses/365 to get cash on hand
+coh_calc <- expenses_yr %>% 
+  pivot_wider(names_from = "Lever type", values_from = value) %>%
+  group_by(Source, CPI, ExpensesGrowth, AdminBloat) %>%
+  arrange(year) %>%
+  mutate(
+    rev_less_exp = revenue - expenditure,
+    daily_expenses = expenditure / 365
+  ) %>%
+  # Calculate fund balance cumulatively
+  mutate(
+    # First create starting balance column
+    starting_balance = if_else(year == "FY27", 47949359, 0),
+    # Then calculate fund balance as: starting balance + cumulative sum of net revenue
+    fund_bal = starting_balance + cumsum(rev_less_exp),
+    # Calculate days of cash on hand
+    coh = fund_bal / daily_expenses
+  ) %>%
+  select(-starting_balance) %>%  # Remove helper column
+  ungroup()
+
+write_csv(coh_calc, "data/coh_calc.csv")

@@ -7,7 +7,7 @@ library(scales)
 library(tidyverse)
 library(plotly)
 
-
+coh_calc <- read_csv("data/coh_calc.csv")
 finance_levers_yr <- read_csv("data/finance_levers_yr.csv")
 finance_data_levers <- read_csv("data/finance data - levers.csv", 
                                 col_types = cols(FY27 = col_number(), 
@@ -71,7 +71,51 @@ server <- function(input, output, session) {
   })
   
   
+  # ---- COH ----
+  # Filter data by selected source
+  filtered_coh <- reactive({
+  coh_calc %>% dplyr::filter(Source == input$finance_plan)
+})
+
   
+  output$coh_plot <- renderPlotly({
+    df <- filtered_coh()
+    
+    # Create scenario labels if not already present
+    if(!"scenario" %in% names(df)) {
+      df <- df %>%
+        mutate(scenario = paste0("CPI:", CPI, "% | ExpGrowth:", ExpensesGrowth, "% | Admin:", AdminBloat, "%"))
+    }
+    
+    plot_ly(
+      data = df,
+      x = ~year,
+      y = ~coh,
+      color = ~scenario,  # Add color by scenario
+      type = "bar",
+      text = ~paste0("COH: ", round(coh, 0), " days<br>",
+                     "Fund Balance: $", scales::comma(round(fund_bal, 0), big.mark = ","), "<br>",
+                     "Revenue: $", scales::comma(round(revenue, 0), big.mark = ","), "<br>",
+                     "Expenditure: $", scales::comma(round(expenditure, 0), big.mark = ",")),
+      hovertemplate = paste0("<b>%{x}</b><br>",
+                             "Scenario: %{fullData.name}<br>",
+                             "%{text}<extra></extra>")
+    ) %>%
+      layout(
+        title = paste("Cash on Hand by Year -", input$source),
+        xaxis = list(title = "Fiscal Year"),
+        yaxis = list(title = "Days of Cash on Hand"),
+        barmode = "group",  # Show bars side by side
+        hovermode = "closest",
+        legend = list(
+          title = list(text = "Scenario"),
+          orientation = "v",
+          x = 1.02,
+          y = 1
+        )
+      )
+  })
+
   
   # ---- expenditures ----
   expenses_all <- read_csv("data/expenses_yr.csv")
@@ -198,10 +242,23 @@ server <- function(input, output, session) {
       scale_y_continuous(#limits = c(170000000, 195000000),
         n.breaks = 6, 
         labels = scales::label_dollar(scale = 1e-6, suffix = "M")) +
-      theme_minimal(base_size = 16) +
+      theme_minimal(base_size = 16)  +
       labs(title = "Adjusted Revenue & Expenditure", x = "Fiscal Year", y = "Amount")
     
-    ggplotly(p)
+    ggplotly(p) %>%
+      layout(
+        legend = list(
+          orientation = "h",       # horizontal
+          x = 0.5,                 # center horizontally
+          xanchor = "center",
+          y = -0.15,               # just below the plot (mobile-friendly)
+          yanchor = "top",
+          font = list(size = 12),  # readable but small for mobile
+          itemwidth = 30           # keeps items compact
+        ),
+        margin = list(b = 80)      # add bottom margin so legend doesn't clip
+      )
+    
   })
   
 }

@@ -35,7 +35,7 @@ cpi_slider <- sliderInput(
   inputId = "CPI",
   label = "CPI",
   min = 2,
-  max = 3,
+  max = 5,
   value = 2.5,
   step = 0.1
 )
@@ -90,7 +90,7 @@ ui <- page_sidebar(
             full_screen = FALSE,
             card_header("Days cash on hand"),
             style = "height: 150px; margin-bottom: 15px;",
-            plotOutput("bill_depth", height = "120px")
+            plotlyOutput("coh_plot")
           )
         ),
         
