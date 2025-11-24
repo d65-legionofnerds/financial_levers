@@ -1,8 +1,4 @@
 Source,Lever type,year,total
-Baseline,expenditure,FY27,0
-Baseline,expenditure,FY28,0
-Baseline,expenditure,FY29,0
-Baseline,expenditure,FY30,0
 NERDS,expenditure,FY27,3180000
 NERDS,expenditure,FY28,1700000
 NERDS,expenditure,FY29,0
@@ -19,14 +15,6 @@ Nov17,revenue,FY27,350000
 Nov17,revenue,FY28,25000
 Nov17,revenue,FY29,25000
 Nov17,revenue,FY30,25000
-Nov3,expenditure,FY27,2180000
-Nov3,expenditure,FY28,700000
-Nov3,expenditure,FY29,0
-Nov3,expenditure,FY30,0
-Nov3,revenue,FY27,1256600
-Nov3,revenue,FY28,363000
-Nov3,revenue,FY29,223000
-Nov3,revenue,FY30,223000
 SDRP Data Hub,revenue,FY27,0
 SDRP Data Hub,revenue,FY28,245000
 SDRP Data Hub,revenue,FY29,0

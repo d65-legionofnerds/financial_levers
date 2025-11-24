@@ -74,7 +74,12 @@ server <- function(input, output, session) {
   # ---- COH ----
   # Filter data by selected source
   filtered_coh <- reactive({
-  coh_calc %>% dplyr::filter(Source == input$finance_plan)
+  coh_calc %>% filter(
+    Source == input$finance_plan,
+    CPI == input$CPI,
+    ExpensesGrowth == input$ExpensesGrowth,
+    dplyr::near(AdminBloat, input$admin_bloat / 100)
+  )
 })
 
   
@@ -91,21 +96,24 @@ server <- function(input, output, session) {
       data = df,
       x = ~year,
       y = ~coh,
-      color = ~scenario,  # Add color by scenario
+      color = ~scenario,
       type = "bar",
-      text = ~paste0("COH: ", round(coh, 0), " days<br>",
-                     "Fund Balance: $", scales::comma(round(fund_bal, 0), big.mark = ","), "<br>",
-                     "Revenue: $", scales::comma(round(revenue, 0), big.mark = ","), "<br>",
-                     "Expenditure: $", scales::comma(round(expenditure, 0), big.mark = ",")),
+      text = ~paste0(round(coh, 0)),  # Simple text for bar labels
+      textposition = "outside",  # Place text above bars
+      textfont = list(size = 12, color = "black"),
+      hovertext = ~paste0("COH: ", round(coh, 0), " days<br>",
+                          "Fund Balance: $", scales::comma(round(fund_bal, 0), big.mark = ","), "<br>",
+                          "Revenue: $", scales::comma(round(revenue, 0), big.mark = ","), "<br>",
+                          "Expenditure: $", scales::comma(round(expenditure, 0), big.mark = ",")),
       hovertemplate = paste0("<b>%{x}</b><br>",
                              "Scenario: %{fullData.name}<br>",
-                             "%{text}<extra></extra>")
+                             "%{hovertext}<extra></extra>")
     ) %>%
       layout(
         title = paste("Cash on Hand by Year -", input$source),
         xaxis = list(title = "Fiscal Year"),
         yaxis = list(title = "Days of Cash on Hand"),
-        barmode = "group",  # Show bars side by side
+        barmode = "group",
         hovermode = "closest",
         legend = list(
           title = list(text = "Scenario"),
@@ -115,7 +123,6 @@ server <- function(input, output, session) {
         )
       )
   })
-
   
   # ---- expenditures ----
   expenses_all <- read_csv("data/expenses_yr.csv")

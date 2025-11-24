@@ -11,6 +11,7 @@ finance_data_levers <- read_csv(
   "data/finance data - levers.csv", 
   col_types = cols(FY27 = col_number())
 )
+coh_calc <- read_csv("data/coh_calc.csv")
 
 # ---- Sidebar Inputs ----
 finance_plan <- selectInput(
@@ -18,6 +19,13 @@ finance_plan <- selectInput(
   label = "Finance plan",
   choices = unique(finance_data_levers$Source),
   selected = "NERDS"
+)
+
+source_select <- selectInput(
+  inputId = "source",
+  label = "COH Source",
+  choices = unique(coh_calc$Source),
+  selected = unique(coh_calc$Source)[1]
 )
 
 admin_slider <- sliderInput(
@@ -29,7 +37,6 @@ admin_slider <- sliderInput(
   step = 10,
   post = "%"
 )
-
 
 cpi_slider <- sliderInput(
   inputId = "CPI",
@@ -51,11 +58,9 @@ exp_slider <- sliderInput(
 
 # Group sidebar inputs with headings
 sidebar_inputs <- tagList(
-  #h5("Finance Plan"),
   finance_plan,
-
+  source_select,
   admin_slider,
-  
   cpi_slider,
   exp_slider
 )
@@ -73,7 +78,7 @@ ui <- page_sidebar(
       title = "Dashboard",
       
       div(
-        style = "max-width: 80%; margin: 0 auto;",  # centers content, 80% width
+        style = "max-width: 80%; margin: 0 auto;",
         
         # Top two cards in columns
         layout_columns(
@@ -82,14 +87,14 @@ ui <- page_sidebar(
           card(
             full_screen = FALSE,
             card_header("FY27 Levers Value"),
-            style = "height: 150px; margin-bottom: 15px;",
-            billboarderOutput("gg_plot", height = "120px")
+            style = "height: 250px; margin-bottom: 15px;",
+            billboarderOutput("gg_plot", height = "230px")
           ),
           
           card(
             full_screen = FALSE,
             card_header("Days cash on hand"),
-            style = "height: 150px; margin-bottom: 15px;",
+            style = "height: 250px; margin-bottom: 15px;",
             plotlyOutput("coh_plot")
           )
         ),
@@ -129,8 +134,8 @@ ui <- page_sidebar(
           card_header("Data from the analysis"),
           style = "margin-bottom: 15px;",
           p("This table shows the data used in the calculations. you can filter by typing in the models you want. "),
-          dataTableOutput("finance_table")
-          )
+          DT::dataTableOutput("finance_table")
+        )
       )
     )
   )
