@@ -44,7 +44,7 @@ fy27_budget <- tibble(
 # Parameter grids
 params <- expand_grid(
   CPI = seq(2, 5, by = 0.1),
-  ExpensesGrowth = seq(2, 5.25, by = 0.25),
+  ExpensesGrowth = seq(2, 5, by = 0.1),
   AdminBloat = seq(0, 0.50, by = 0.1)
 )
 

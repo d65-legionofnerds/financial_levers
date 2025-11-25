@@ -17,6 +17,19 @@ finance_data_levers <- read_csv("data/finance data - levers.csv",
 
 server <- function(input, output, session) {
   
+  # ---- SLIDER LOCKING ----
+  observeEvent(input$CPI, {
+    if(input$lock_sliders) {
+      updateSliderInput(session, "ExpensesGrowth", value = input$CPI)
+    }
+  }, ignoreInit = TRUE)
+  
+  observeEvent(input$ExpensesGrowth, {
+    if(input$lock_sliders) {
+      updateSliderInput(session, "CPI", value = input$ExpensesGrowth)
+    }
+  }, ignoreInit = TRUE)
+  
   # ---- GAUGE CHART ----
   # Reactive filtered data
   filtered_data <- reactive({
@@ -66,7 +79,11 @@ server <- function(input, output, session) {
     DT::datatable(
       filtered_data(),
       rownames = FALSE,
-      filter = "top"
+      filter = "top",
+      options = list(
+        pageLength = 50,  # Default to 50 rows
+        lengthMenu = c(10, 50, 100, 200)  # Options in the dropdown
+      )
     )
   })
   
@@ -74,14 +91,14 @@ server <- function(input, output, session) {
   # ---- COH ----
   # Filter data by selected source
   filtered_coh <- reactive({
-  coh_calc %>% filter(
-    Source == input$finance_plan,
-    CPI == input$CPI,
-    ExpensesGrowth == input$ExpensesGrowth,
-    dplyr::near(AdminBloat, input$admin_bloat / 100)
-  )
-})
-
+    coh_calc %>% filter(
+      Source == input$finance_plan,
+      CPI == input$CPI,
+      ExpensesGrowth == input$ExpensesGrowth,
+      dplyr::near(AdminBloat, input$admin_bloat / 100)
+    )
+  })
+  
   
   output$coh_plot <- renderPlotly({
     df <- filtered_coh()
@@ -144,7 +161,7 @@ server <- function(input, output, session) {
         showlegend = FALSE
       ) %>%
       layout(
-        title = paste("Cash on Hand by Year -", input$source),
+        title = paste("Cash on Hand by Year -", input$finance_plan),
         xaxis = list(title = "Fiscal Year"),
         yaxis = list(title = "Days of Cash on Hand"),
         barmode = "group",
@@ -275,9 +292,11 @@ server <- function(input, output, session) {
                         values = c("surplus" = "#5839BF", "deficit" = "red")) +
       scale_color_manual(name = "Lever type",
                          values = c("revenue" = "#5839BF", "expenditure" = "red")) +
-      scale_y_continuous(#limits = c(170000000, 195000000),
-        n.breaks = 6, limits = c(165000000, NA) ,
-        labels = scales::label_dollar(scale = 1e-6, suffix = "M")) +
+      scale_y_continuous(
+        n.breaks = 6, 
+        limits = c(165000000, NA),
+        labels = scales::label_dollar(scale = 1e-6, suffix = "M")
+      ) +
       theme_minimal(base_size = 16)  +
       labs(title = "Adjusted Revenue & Expenditure", x = "Fiscal Year", y = "Amount")
     
@@ -298,5 +317,3 @@ server <- function(input, output, session) {
   })
   
 }
-
-
