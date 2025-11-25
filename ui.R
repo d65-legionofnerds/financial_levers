@@ -81,7 +81,7 @@ ui <- page_sidebar(
             full_screen = FALSE,
             card_header("FY27 Levers Value"),
             style = "height: 250px; margin-bottom: 15px;",
-            billboarderOutput("gg_plot", height = "230px")
+            billboarderOutput("gg_plot", height = "190")
           ),
           
           card(

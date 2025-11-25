@@ -38,7 +38,7 @@ write_csv(finance_levers, "data/finance_levers_yr.csv")
 fy27_budget <- tibble(
   Source = "Budget",
   `Lever type` = c("revenue", "expenditure"),
-  value = c(175485091, 175682880)
+  value = c(171466529, 183874315 ) # subtract the 8 million out
 )
 
 # Parameter grids
@@ -172,6 +172,6 @@ all_projections %>%
 
 cat("\n=== Sample COH Calculation ===\n")
 coh_calc %>%
-  filter(Source == sources[1], CPI == 2.5, ExpensesGrowth == 2.5, AdminBloat == 0.3) %>%
+  filter(Source == sources[1], CPI == 2.5, ExpensesGrowth == 2.5) %>%
   select(year, revenue, expenditure, fund_bal, coh) %>%
   print()
