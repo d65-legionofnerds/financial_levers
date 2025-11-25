@@ -37,7 +37,7 @@ cpi_slider <- sliderInput(
   label = "CPI",
   min = 2,
   max = 5,
-  value = 2.5,
+  value = 3.1,
   step = 0.1
 )
 
