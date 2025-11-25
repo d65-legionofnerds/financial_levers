@@ -10,10 +10,21 @@ finance_data_levers <- read_csv(
                    FY29 = col_number(), FY30 = col_number())
 )
 
-# Pivot to long format and combine NERDS + Nov3
-finance_levers <- finance_data_levers %>%
-  pivot_longer(cols = starts_with("FY"), names_to = "year", values_to = "value") %>%
-  mutate(Source = if_else(Source == "Nov3", "NERDS", Source)) %>%
+# Pivot to long format
+finance_levers_base <- finance_data_levers %>%
+  pivot_longer(cols = starts_with("FY"), names_to = "year", values_to = "value")
+
+# Create combined NERDS source (original NERDS + Nov3)
+nerds_combined <- finance_levers_base %>%
+  filter(Source %in% c("NERDS", "Nov3")) %>%
+  group_by(`Lever type`, year) %>%
+  summarize(value = sum(value, na.rm = TRUE), .groups = "drop") %>%
+  mutate(Source = "NERDS")
+
+# Keep Nov3 separate and add combined NERDS
+finance_levers <- finance_levers_base %>%
+  filter(Source != "NERDS") %>%  # Remove original NERDS
+  bind_rows(nerds_combined) %>%  # Add combined NERDS
   group_by(Source, `Lever type`, year) %>%
   summarize(total = sum(value, na.rm = TRUE), .groups = "drop")
 
@@ -161,6 +172,6 @@ all_projections %>%
 
 cat("\n=== Sample COH Calculation ===\n")
 coh_calc %>%
-  filter(Source == sources[1], CPI == 2, ExpensesGrowth == 2.5) %>%
+  filter(Source == sources[1], CPI == 2.5, ExpensesGrowth == 2.5, AdminBloat == 0.3) %>%
   select(year, revenue, expenditure, fund_bal, coh) %>%
   print()

@@ -21,12 +21,6 @@ finance_plan <- selectInput(
   selected = "NERDS"
 )
 
-source_select <- selectInput(
-  inputId = "source",
-  label = "COH Source",
-  choices = unique(coh_calc$Source),
-  selected = unique(coh_calc$Source)[1]
-)
 
 admin_slider <- sliderInput(
   inputId = "admin_bloat",
@@ -59,7 +53,6 @@ exp_slider <- sliderInput(
 # Group sidebar inputs with headings
 sidebar_inputs <- tagList(
   finance_plan,
-  source_select,
   admin_slider,
   cpi_slider,
   exp_slider

@@ -92,35 +92,64 @@ server <- function(input, output, session) {
         mutate(scenario = paste0("CPI:", CPI, "% | ExpGrowth:", ExpensesGrowth, "% | Admin:", AdminBloat, "%"))
     }
     
+    # Add color based on COH threshold
+    df <- df %>%
+      mutate(
+        status = if_else(coh >= 90, "Healthy (≥90 days)", "At Risk (<90 days)"),
+        bar_color = if_else(coh >= 90, "#5839BF", "#FF6B6B")
+      )
+    
+    # Get one row per year (to avoid duplicate labels)
+    df_labels <- df %>%
+      group_by(year) %>%
+      slice(1) %>%
+      ungroup()
+    
     plot_ly(
       data = df,
       x = ~year,
       y = ~coh,
-      color = ~scenario,
+      color = ~status,
+      colors = c("Healthy (≥90 days)" = "#5839BF", "At Risk (<90 days)" = "#FF6B6B"),
       type = "bar",
-      text = ~paste0(round(coh, 0)),  # Simple text for bar labels
-      textposition = "outside",  # Place text above bars
-      textfont = list(size = 12, color = "black"),
       hovertext = ~paste0("COH: ", round(coh, 0), " days<br>",
+                          "Status: ", status, "<br>",
+                          "Scenario: ", scenario, "<br>",
                           "Fund Balance: $", scales::comma(round(fund_bal, 0), big.mark = ","), "<br>",
                           "Revenue: $", scales::comma(round(revenue, 0), big.mark = ","), "<br>",
                           "Expenditure: $", scales::comma(round(expenditure, 0), big.mark = ",")),
-      hovertemplate = paste0("<b>%{x}</b><br>",
-                             "Scenario: %{fullData.name}<br>",
-                             "%{hovertext}<extra></extra>")
+      hovertemplate = paste0("<b>%{x}</b><br>%{hovertext}<extra></extra>"),
+      showlegend = FALSE
     ) %>%
+      # Add text annotations inside bars
+      add_annotations(
+        data = df_labels,
+        x = ~year,
+        y = ~coh / 2,  # Middle of bar
+        text = ~paste0("<b>", round(coh, 0), "</b>"),
+        showarrow = FALSE,
+        font = list(size = 14, color = "white"),
+        xanchor = "center",
+        yanchor = "middle"
+      ) %>%
+      # Add reference line at 90 days
+      add_trace(
+        x = unique(df$year),
+        y = 90,
+        type = "scatter",
+        mode = "lines",
+        line = list(color = "black", dash = "dash", width = 2),
+        name = "90-day threshold",
+        hoverinfo = "skip",
+        showlegend = FALSE
+      ) %>%
       layout(
         title = paste("Cash on Hand by Year -", input$source),
         xaxis = list(title = "Fiscal Year"),
         yaxis = list(title = "Days of Cash on Hand"),
         barmode = "group",
         hovermode = "closest",
-        legend = list(
-          title = list(text = "Scenario"),
-          orientation = "v",
-          x = 1.02,
-          y = 1
-        )
+        showlegend = FALSE
       )
   })
   
@@ -247,7 +276,7 @@ server <- function(input, output, session) {
       scale_color_manual(name = "Lever type",
                          values = c("revenue" = "#5839BF", "expenditure" = "red")) +
       scale_y_continuous(#limits = c(170000000, 195000000),
-        n.breaks = 6, 
+        n.breaks = 6, limits = c(165000000, NA) ,
         labels = scales::label_dollar(scale = 1e-6, suffix = "M")) +
       theme_minimal(base_size = 16)  +
       labs(title = "Adjusted Revenue & Expenditure", x = "Fiscal Year", y = "Amount")
