@@ -1,4 +1,20 @@
 Source,Lever type,year,total
+17-Nov,expenditure,FY27,1430000
+17-Nov,expenditure,FY28,700000
+17-Nov,expenditure,FY29,0
+17-Nov,expenditure,FY30,0
+17-Nov,revenue,FY27,350000
+17-Nov,revenue,FY28,25000
+17-Nov,revenue,FY29,0
+17-Nov,revenue,FY30,0
+3-Nov,expenditure,FY27,2180000
+3-Nov,expenditure,FY28,700000
+3-Nov,expenditure,FY29,0
+3-Nov,expenditure,FY30,0
+3-Nov,revenue,FY27,5256600
+3-Nov,revenue,FY28,343000
+3-Nov,revenue,FY29,0
+3-Nov,revenue,FY30,0
 Baseline,expenditure,FY27,0
 Baseline,expenditure,FY28,0
 Baseline,expenditure,FY29,0
@@ -7,35 +23,11 @@ Baseline,revenue,FY27,0
 Baseline,revenue,FY28,0
 Baseline,revenue,FY29,0
 Baseline,revenue,FY30,0
-NERDS,expenditure,FY27,4980000
+NERDS,expenditure,FY27,6380000
 NERDS,expenditure,FY28,700000
 NERDS,expenditure,FY29,0
 NERDS,expenditure,FY30,0
 NERDS,revenue,FY27,8656600
-NERDS,revenue,FY28,1363000
-NERDS,revenue,FY29,223000
-NERDS,revenue,FY30,223000
-Nov17,expenditure,FY27,1430000
-Nov17,expenditure,FY28,700000
-Nov17,expenditure,FY29,0
-Nov17,expenditure,FY30,0
-Nov17,revenue,FY27,350000
-Nov17,revenue,FY28,25000
-Nov17,revenue,FY29,25000
-Nov17,revenue,FY30,25000
-Nov3,expenditure,FY27,2180000
-Nov3,expenditure,FY28,700000
-Nov3,expenditure,FY29,0
-Nov3,expenditure,FY30,0
-Nov3,revenue,FY27,5256600
-Nov3,revenue,FY28,363000
-Nov3,revenue,FY29,223000
-Nov3,revenue,FY30,223000
-SDRP Data Hub,revenue,FY27,0
-SDRP Data Hub,revenue,FY28,245000
-SDRP Data Hub,revenue,FY29,0
-SDRP Data Hub,revenue,FY30,0
-WTF,revenue,FY27,0
-WTF,revenue,FY28,60000
-WTF,revenue,FY29,60000
-WTF,revenue,FY30,60000
+NERDS,revenue,FY28,1343000
+NERDS,revenue,FY29,0
+NERDS,revenue,FY30,0

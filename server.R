@@ -51,7 +51,7 @@ server <- function(input, output, session) {
     # Calculate sum
     fy27_sum <- sum(df$FY27, na.rm = TRUE)
     fy28_sum <- sum(df$FY28, na.rm = TRUE)
-    data_sum <- (fy27_sum + fy28_sum) / 1e6
+    data_sum <- (fy27_sum + fy28_sum ) / 1e6 #+ (input$admin_bloat / 100)*540000 
     
     # Ensure numeric and valid
     data_sum <- round(as.numeric(data_sum), 2)
@@ -95,7 +95,7 @@ server <- function(input, output, session) {
       Source == input$finance_plan,
       CPI == input$CPI,
       ExpensesGrowth == input$ExpensesGrowth,
-      dplyr::near(AdminBloat, input$admin_bloat / 100)
+      # dplyr::near(AdminBloat, input$admin_bloat / 100)
     )
   })
   
@@ -106,7 +106,7 @@ server <- function(input, output, session) {
     # Create scenario labels if not already present
     if(!"scenario" %in% names(df)) {
       df <- df %>%
-        mutate(scenario = paste0("CPI:", CPI, "% | ExpGrowth:", ExpensesGrowth, "% | Admin:", AdminBloat, "%"))
+        mutate(scenario = paste0("CPI:", CPI, "% | ExpGrowth:", ExpensesGrowth)) # , "% | Admin:", AdminBloat, "%"))
     }
     
     # Add color based on COH threshold
@@ -182,7 +182,7 @@ server <- function(input, output, session) {
         Source == input$finance_plan,
         CPI == input$CPI,
         ExpensesGrowth == input$ExpensesGrowth,
-        dplyr::near(AdminBloat, input$admin_bloat / 100)
+        # dplyr::near(AdminBloat, input$admin_bloat / 100)
       )
   })
   

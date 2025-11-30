@@ -45,30 +45,30 @@ fy27_budget <- tibble(
 params <- expand_grid(
   CPI = seq(2, 5, by = 0.1),
   ExpensesGrowth = seq(2, 5, by = 0.1),
-  AdminBloat = seq(0, 0.50, by = 0.1)
+  #AdminBloat = seq(0, 0.50, by = 0.1)
 )
 
 future_years <- paste0("FY", 28:30)
 sources <- setdiff(unique(finance_levers$Source), "Budget")
 
 # Admin cut: $540k per 0.1 (10%)
-admin_cut <- function(admin_bloat) (admin_bloat / 0.1) * 540000
+# admin_cut <- function(admin_bloat) (admin_bloat / 0.1) * 540000
 
 # ============================================================================
 # 3. PROJECT FUNCTION (applies to both baseline and sources)
 # ============================================================================
 
-project_finances <- function(base_values, params_grid, apply_admin = FALSE) {
+project_finances <- function(base_values, params_grid) { #, apply_admin = FALSE
   # Start with base values and apply admin cut to FY27 FIRST
   base_with_params <- base_values %>%
     crossing(params_grid) %>%
     mutate(
       # Apply admin cut to base value BEFORE growth calculations
-      adjusted_base = if_else(
-        apply_admin & `Lever type` == "expenditure",
-        value - admin_cut(AdminBloat),
-        value
-      )
+      adjusted_base = value #if_else(
+        #apply_admin & `Lever type` == "expenditure",
+        #value - admin_cut(AdminBloat),
+        #value
+      #)
     )
   
   # Generate all years (FY27-FY30)
@@ -76,7 +76,7 @@ project_finances <- function(base_values, params_grid, apply_admin = FALSE) {
   
   # Project across all years FROM THE ADJUSTED BASE
   all_projections <- base_with_params %>%
-    group_by(Source, `Lever type`, CPI, ExpensesGrowth, AdminBloat) %>%
+    group_by(Source, `Lever type`, CPI, ExpensesGrowth) %>% #, AdminBloat
     reframe(
       year = all_years,
       value = {
@@ -98,7 +98,7 @@ project_finances <- function(base_values, params_grid, apply_admin = FALSE) {
 # ============================================================================
 
 # Baseline (no admin cuts)
-baseline_projections <- project_finances(fy27_budget, params, apply_admin = FALSE)
+baseline_projections <- project_finances(fy27_budget, params) #, apply_admin = FALSE)
 
 # Source-specific projections (with admin cuts)
 source_projections <- map_df(sources, function(src) {
@@ -122,12 +122,12 @@ source_projections <- map_df(sources, function(src) {
     ) %>%
     select(Source, `Lever type`, value)
   
-  project_finances(fy27_values, params, apply_admin = TRUE)
+  project_finances(fy27_values, params) #, apply_admin = TRUE
 })
 
 # Combine all
 all_projections <- bind_rows(baseline_projections, source_projections) %>%
-  arrange(Source, `Lever type`, year, CPI, ExpensesGrowth, AdminBloat)
+  arrange(Source, `Lever type`, year, CPI, ExpensesGrowth) #, AdminBloat
 
 write_csv(all_projections, "data/expenses_yr.csv")
 
@@ -140,7 +140,7 @@ fy26_starting_balance <- 47949359
 
 coh_calc <- all_projections %>%
   pivot_wider(names_from = "Lever type", values_from = value) %>%
-  group_by(Source, CPI, ExpensesGrowth, AdminBloat) %>%
+  group_by(Source, CPI, ExpensesGrowth) %>% #, AdminBloat
   arrange(year) %>%
   mutate(
     rev_less_exp = revenue - expenditure,

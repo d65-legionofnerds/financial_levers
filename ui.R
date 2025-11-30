@@ -21,19 +21,19 @@ finance_plan <- selectInput(
   selected = "NERDS"
 )
 
-admin_slider <- sliderInput(
-  inputId = "admin_bloat",
-  label = "Admin Bloat Reduction",
-  min = 0,
-  max = 50,
-  value = 30,
-  step = 10,
-  post = "%"
-)
+# admin_slider <- sliderInput(
+#   inputId = "admin_bloat",
+#   label = "Admin Bloat Reduction",
+#   min = 0,
+#   max = 50,
+#   value = 30,
+#   step = 10,
+#   post = "%"
+# )
 
 cpi_slider <- sliderInput(
   inputId = "CPI",
-  label = "CPI",
+  label = "Revenue growth (CPI)",
   min = 2,
   max = 5,
   value = 3.1,
@@ -59,7 +59,7 @@ lock_checkbox <- checkboxInput(
 # Group sidebar inputs
 sidebar_inputs <- sidebar(
   finance_plan,
-  admin_slider,
+  #admin_slider,
   cpi_slider,
   exp_slider,
   lock_checkbox,  # Added lock checkbox
@@ -108,6 +108,7 @@ ui <- page_sidebar(
       
       div(
         style = "max-width: 80%; margin: 0 auto;",
+        p("To learn more, click the 'How to use' tab above. You can select from proposed financial plans at the left, then adjust sliders for assumptions about revenue and expenses. Currently, revenue and expeses move together. To vary them separately, uncheck the box at the bottom of the left pane. Note that we use district numbers as a starting point, but the projections from the district consultant use different rates each year, so our estimates do vary a little from theirs."),
         
         # Top two cards in columns
         layout_columns(
@@ -115,7 +116,7 @@ ui <- page_sidebar(
           
           card(
             full_screen = FALSE,
-            card_header("FY27 Levers Value"),
+            card_header("Total Levers Value"),
             style = "height: 250px; margin-bottom: 15px;",
             billboarderOutput("gg_plot", height = "190")
           ),
@@ -140,7 +141,7 @@ ui <- page_sidebar(
     
     # ---- About Tab ----
     nav_panel(
-      title = "About",
+      title = "How to use",
       div(
         style = "max-width: 80%; margin: 0 auto;",
         card(
@@ -148,7 +149,7 @@ ui <- page_sidebar(
           card_header("About this App"),
           style = "margin-bottom: 15px;",
           p("This Shiny app shows financial levers, revenue and expenditure projections, and other interactive analyses."),
-          p("Use the sidebar to select the finance plan, adjust Admin bloat, CPI, and Expenses Growth sliders, and explore the results."),
+          p("Use the sidebar to select the finance plan, CPI, and Expenses Growth sliders, and explore the results."),
           p(
             "We use data from the ",
             tags$a(
@@ -161,17 +162,17 @@ ui <- page_sidebar(
           ),
           p("For each of the ranges, we use variables backed by data to inform the range:"),
           tags$ul(
-            tags$li(
-              tags$strong("Admin Bloat:"), 
-              " This is the proportion of reduction of our admin staff -- we are approximately 33% above the mean (",
-              tags$a(
-                href = "https://d65-legionofnerds.github.io/dataanalysis/salary-data.html",
-                target = "_blank",
-                style = "color: #5839BF;",
-                "source"
-              ),
-              ")."
-            ),
+            # tags$li(
+            #   # tags$strong("Admin Bloat:"),
+            #   # " This is the proportion of reduction of our admin staff -- we are approximately 33% above the mean (",
+            #   # tags$a(
+            #   #   href = "https://d65-legionofnerds.github.io/dataanalysis/salary-data.html",
+            #   #   target = "_blank",
+            #   #   style = "color: #5839BF;",
+            #   #   "source"
+            #   # ),
+            #   # ")."
+            #  ),
             tags$li(
               tags$strong("CPI:"), 
               " The values have ranged between 2 and 8 since Aug 2022 (",
