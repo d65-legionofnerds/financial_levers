@@ -21,22 +21,21 @@ finance_plan <- selectInput(
   selected = "NERDS"
 )
 
-# admin_slider <- sliderInput(
-#   inputId = "admin_bloat",
-#   label = "Admin Bloat Reduction",
-#   min = 0,
-#   max = 50,
-#   value = 30,
-#   step = 10,
-#   post = "%"
-# )
+cuts_slider <- sliderInput(
+  inputId = "add_cuts",
+  label = "Additional one-time cut (millions)",
+  min = 0,
+  max = 13,
+  value = 0,
+  step = 0.5,
+)
 
 cpi_slider <- sliderInput(
   inputId = "CPI",
   label = "Revenue growth (CPI)",
   min = 2,
-  max = 5,
-  value = 3.1,
+  max = 4.7,
+  value = 2.9,
   step = 0.1
 )
 
@@ -44,8 +43,8 @@ exp_slider <- sliderInput(
   inputId = "ExpensesGrowth",
   label = "Expenses Growth",
   min = 2,
-  max = 5,
-  value = 3.1,
+  max = 4.7,
+  value = 2.9,
   step = 0.1
 )
 
@@ -59,7 +58,7 @@ lock_checkbox <- checkboxInput(
 # Group sidebar inputs
 sidebar_inputs <- sidebar(
   finance_plan,
-  #admin_slider,
+  cuts_slider,
   cpi_slider,
   exp_slider,
   lock_checkbox,  # Added lock checkbox
@@ -108,7 +107,10 @@ ui <- page_sidebar(
       
       div(
         style = "max-width: 80%; margin: 0 auto;",
-        p("To learn more, click the 'How to use' tab above. You can select from proposed financial plans at the left, then adjust sliders for assumptions about revenue and expenses. Currently, revenue and expeses move together. To vary them separately, uncheck the box at the bottom of the left pane. Note that we use district numbers as a starting point, but the projections from the district consultant use different rates each year, so our estimates do vary a little from theirs."),
+        p("To learn more, click the 'How to use' tab above. 
+          You can select from proposed financial plans at the left, 
+          then adjust sliders for assumptions about revenue and expenses. 
+          Currently, revenue and expeses move together. To vary them separately, uncheck the box at the bottom of the left panel. "),
         
         # Top two cards in columns
         layout_columns(
@@ -133,7 +135,11 @@ ui <- page_sidebar(
         card(
           full_screen = TRUE,
           card_header("Expenditures vs Revenue"),
-          style = "height: 400px; margin-bottom: 15px;",
+          style = "height: 600px; margin-bottom: 15px;",
+          tags$div(
+            style = "padding: 4px; font-size: 0.9rem;",
+            uiOutput("rev_exp_summary")
+          ),
           plotlyOutput("rev_exp_adjusted", height = "180px")
         )
       )
@@ -174,7 +180,7 @@ ui <- page_sidebar(
             #   # ")."
             #  ),
             tags$li(
-              tags$strong("CPI:"), 
+              tags$strong("Revenue Growth (CPI):"), 
               " The values have ranged between 2 and 8 since Aug 2022 (",
               tags$a(
                 href = "https://www.bls.gov/regions/midwest/news-release/consumerpriceindex_chicago.html",
@@ -201,9 +207,23 @@ ui <- page_sidebar(
                 "4 percent from 2017-2018 to 2018-2019"
               ),
               "."
-            )
+            ),
           )
         )
+      ),
+      p(
+        "Note that we use district numbers as a starting point, but the projections from the district consultant use different rates each year, ",
+        "so our estimates do vary a little from theirs. To learn more about the district budget, see either ",
+        a("our explanation here", 
+          href = "https://d65-legionofnerds.github.io/assets/no_changes_budget_20251129.html",
+          target = "_blank"
+        ),
+        " or ",
+        a("this detailed explanation from the Evanston RoundTable", 
+          href = "https://evanstonroundtable.com/2025/11/29/guest-essay-more-scrutiny-of-district-65s-financial-projections-needed/",
+          target = "_blank"
+        ),
+        "."
       )
     ),
     

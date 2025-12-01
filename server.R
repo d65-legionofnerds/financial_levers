@@ -51,7 +51,7 @@ server <- function(input, output, session) {
     # Calculate sum
     fy27_sum <- sum(df$FY27, na.rm = TRUE)
     fy28_sum <- sum(df$FY28, na.rm = TRUE)
-    data_sum <- (fy27_sum + fy28_sum ) / 1e6 #+ (input$admin_bloat / 100)*540000 
+    data_sum <- (fy27_sum + fy28_sum + input$add_cuts*1e6) / 1e6 #+ (input$admin_bloat / 100)*540000 
     
     # Ensure numeric and valid
     data_sum <- round(as.numeric(data_sum), 2)
@@ -95,7 +95,7 @@ server <- function(input, output, session) {
       Source == input$finance_plan,
       CPI == input$CPI,
       ExpensesGrowth == input$ExpensesGrowth,
-      # dplyr::near(AdminBloat, input$admin_bloat / 100)
+      add_cuts == input$add_cuts
     )
   })
   
@@ -182,7 +182,7 @@ server <- function(input, output, session) {
         Source == input$finance_plan,
         CPI == input$CPI,
         ExpensesGrowth == input$ExpensesGrowth,
-        # dplyr::near(AdminBloat, input$admin_bloat / 100)
+        add_cuts == input$add_cuts
       )
   })
   
@@ -264,6 +264,61 @@ server <- function(input, output, session) {
       )
   })
   
+  # NEW: Summary box output for revenue/expenditure differences
+  output$rev_exp_summary <- renderUI({
+    df <- expenses_filtered() %>% 
+      group_by(`Lever type`, year) %>%
+      summarise(value = mean(value, na.rm = TRUE), .groups = "drop") %>%
+      pivot_wider(names_from = `Lever type`, values_from = value) %>%
+      mutate(
+        difference = revenue - expenditure,
+        year_display = year
+      )
+    
+    # Create summary cards for each year
+    summary_cards <- lapply(1:nrow(df), function(i) {
+      row <- df[i, ]
+      diff_val <- row$difference
+      is_surplus <- diff_val >= 0
+      
+      tags$div(
+        style = paste0(
+          "display: inline-block; ",
+          "margin: 5px; ",
+          "padding: 10px 15px; ",
+          "border-radius: 8px; ",
+          "background-color: ", if(is_surplus) "#e8f5e9" else "#ffebee", "; ",
+          "border: 2px solid ", if(is_surplus) "#5839BF" else "#f44336", ";"
+        ),
+        tags$div(
+          style = "font-weight: bold; font-size: 14px; margin-bottom: 5px;",
+          row$year_display
+        ),
+        tags$div(
+          style = paste0("font-size: 16px; color: ", if(is_surplus) "#2e7d32" else "#c62828", "; font-weight: bold;"),
+          if(is_surplus) "+" else "",
+          scales::dollar(diff_val, scale = 1e-6, suffix = "M", accuracy = 0.1)
+        ),
+        tags$div(
+          style = "font-size: 11px; color: #666; margin-top: 3px;",
+          if(is_surplus) "Surplus" else "Deficit"
+        )
+      )
+    })
+    
+    tags$div(
+      style = "padding: 15px; background-color: #f5f5f5; border-radius: 10px; margin-bottom: 15px; text-align: center;",
+      tags$h4(
+        style = "margin: 0 0 10px 0; color: #333;",
+        "Net Position by Fiscal Year (Revenue - Expenditure)"
+      ),
+      tags$div(
+        style = "display: flex; justify-content: center; flex-wrap: wrap;",
+        summary_cards
+      )
+    )
+  })
+  
   output$rev_exp_adjusted <- renderPlotly({
     df <- expenses_filtered() %>% 
       # Aggregate to single value per year per lever type
@@ -286,8 +341,8 @@ server <- function(input, output, session) {
                       ymax = pmax(revenue, expenditure),
                       fill = fill_color), 
                   alpha = 0.3) +
-      geom_line(aes(y = revenue, color = "revenue"), size = 1.2) +
       geom_line(aes(y = expenditure, color = "expenditure"), size = 1.2) +
+      geom_line(aes(y = revenue, color = "revenue"), size = 1.2) +
       scale_fill_manual(name = "Status",
                         values = c("surplus" = "#5839BF", "deficit" = "red")) +
       scale_color_manual(name = "Lever type",
